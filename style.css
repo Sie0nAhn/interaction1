@@ -443,10 +443,16 @@ body { font-family: var(--font-kr); color: #fff; cursor: none; }
   z-index: 12;
 }
 
-.ghost-btn {
+.orb-actions {
   position: absolute;
   left: 40px;
   top: 412px;
+  display: flex;
+  gap: 10px;
+  z-index: 13;
+}
+
+.ghost-btn {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -459,9 +465,11 @@ body { font-family: var(--font-kr); color: #fff; cursor: none; }
   font-size: 13px;
   font-weight: 600;
   cursor: none;
-  z-index: 13;
+  white-space: nowrap;
   transition: border-color 350ms ease, background 350ms ease;
 }
+.ghost-btn--go { border-color: rgba(30,255,102,.45); }
+.ghost-btn:not(.ghost-btn--go) { color: rgba(255,255,255,.6); padding-left: 22px; }
 .ghost-btn__dot {
   width: 6px;
   height: 6px;
@@ -621,6 +629,60 @@ body { font-family: var(--font-kr); color: #fff; cursor: none; }
 @keyframes marble-spin-slow {
   from { background-position: 0 0; }
   to   { background-position: -520px 0; }
+}
+
+/* ============================================================
+   영상 / 구슬빛 정원
+   ============================================================ */
+.screen--film { z-index: 4; background: #000; }
+.screen--film video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.film-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 34px;
+  transform: translateX(-50%);
+  z-index: 3;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.5);
+  text-shadow: 0 1px 8px #000;
+  pointer-events: none;
+}
+
+/* 배경을 검정으로 — 전환 중에 정원의 보라색이 새어나오지 않게 */
+.screen--garden { z-index: 5; background: #000; }
+.screen--garden iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* 정원은 자체 마우스 조작이 있어서 실제 커서를 돌려준다 */
+body.is-garden { cursor: auto; }
+
+/* ============================================================
+   장면 전환 — 검정으로 덮었다 걷어낸다
+   ============================================================ */
+.fade {
+  position: absolute;
+  inset: 0;
+  z-index: 76;
+  background: #000;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* ============================================================

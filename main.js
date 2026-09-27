@@ -19,47 +19,47 @@ const VIDEO_FX = false;
    ============================================================ */
 const VIDEOS = [
   {
-    name: "서늘한 새벽공기", tags: ["빛", "온도"], tint: "#6f83e8",
+    name: "서늘한 새벽공기", file: "01-dawn-air.mp4", tags: ["빛", "온도"], tint: "#6f83e8",
     marble: { hue: 208, sat: 1.2, bri: 0.82, glow: "rgba(74,108,240,.34)" },
     grade: ["#6d7cbe", "#aba4e0", "#fff1f8"],
   },
   {
-    name: "오후 4시의 햇살", tags: ["온도", "시간"], tint: "#ff9b4d",
+    name: "오후 4시의 햇살", file: "02-afternoon-light.mp4", tags: ["온도", "시간"], tint: "#ff9b4d",
     marble: { hue: 8, sat: 1.1, bri: 1.03, glow: "rgba(255,140,40,.34)" },
     grade: ["#eb9670", "#ffd6ab", "#fffaee"],
   },
   {
-    name: "윤슬의 빤짝임", tags: ["물", "빛"], tint: "#4fd2e6",
+    name: "윤슬의 빤짝임", file: "03-water-glitter.mp4", tags: ["물", "빛"], tint: "#4fd2e6",
     marble: { hue: 169, sat: 0.95, bri: 1.05, glow: "rgba(70,207,230,.32)" },
     grade: ["#6ea7c4", "#abe0e9", "#f8feff"],
   },
   {
-    name: "계절의 경계면", tags: ["계절", "촉감"], tint: "#7fdc9b",
+    name: "계절의 경계면", file: "04-season-edge.mp4", tags: ["계절", "촉감"], tint: "#7fdc9b",
     marble: { hue: 112, sat: 0.95, bri: 1.0, glow: "rgba(121,220,143,.30)" },
     grade: ["#87ae91", "#c6e8c2", "#fcfff4"],
   },
   {
-    name: "고요한 정적의 소리", tags: ["소리", "여백"], tint: "#b9b4e8",
+    name: "고요한 정적의 소리", file: "05-silence.mp4", tags: ["소리", "여백"], tint: "#b9b4e8",
     marble: { hue: 224, sat: 0.62, bri: 1.02, glow: "rgba(169,166,220,.30)" },
     grade: ["#9291aa", "#cbc8db", "#fbfafd"],
   },
   {
-    name: "낯선 타인의 온기", tags: ["온도", "사람"], tint: "#ff8a70",
+    name: "낯선 타인의 온기", file: "06-stranger-warmth.mp4", tags: ["온도", "사람"], tint: "#ff8a70",
     marble: { hue: 352, sat: 1.05, bri: 1.0, glow: "rgba(255,122,92,.34)" },
     grade: ["#d68d7b", "#ffc3b1", "#fff6ef"],
   },
   {
-    name: "비 오는 날의 흙냄새", tags: ["냄새", "날씨"], tint: "#c9c076",
+    name: "비 오는 날의 흙냄새", file: "07-petrichor.mp4", tags: ["냄새", "날씨"], tint: "#c9c076",
     marble: { hue: 26, sat: 0.68, bri: 0.93, glow: "rgba(179,154,77,.30)" },
     grade: ["#909b71", "#d0cc9e", "#faf8ea"],
   },
   {
-    name: "이유없는 설렘", tags: ["감정", "심박"], tint: "#ff77b8",
+    name: "이유없는 설렘", file: "08-flutter.mp4", tags: ["감정", "심박"], tint: "#ff77b8",
     marble: { hue: 314, sat: 1.05, bri: 1.02, glow: "rgba(255,94,168,.34)" },
     grade: ["#c980ad", "#ffbfdb", "#fff4fa"],
   },
   {
-    name: "첫눈을 보던 감각", tags: ["눈", "계절"], tint: "#bcd8f5",
+    name: "첫눈을 보던 감각", file: "09-first-snow.mp4", tags: ["눈", "계절"], tint: "#bcd8f5",
     marble: { hue: 190, sat: 0.5, bri: 1.1, glow: "rgba(188,216,245,.32)" },
     grade: ["#8fa7c4", "#cfdff2", "#ffffff"],
   },
@@ -274,7 +274,9 @@ function placeTile(el, col, row) {
 /* 실제 영상 요소는 8개뿐 — 32칸이 이 8개를 나눠 그린다 */
 const videoPool = VIDEOS.map((data) => {
   const v = document.createElement("video");
-  v.src = encodeURIComponent(data.name) + ".mp4";
+  // 파일명은 영문. 한글 파일명은 맥(NFD)과 깃허브(요청은 NFC)에서 서로 다른
+  // 이름으로 취급돼 배포 후 404 가 난다.
+  v.src = data.file;
   v.muted = true;
   v.loop = true;
   v.playsInline = true;
@@ -867,11 +869,9 @@ function select() {
   }, 0.5);
   tl.to(morph, { filter: "blur(7px) brightness(1.7)", duration: 0.5, ease: "power2.in" }, 1.1);
 
-  // 3. 구슬 탄생
-  tl.add(() => {
-    gsap.set(screenGrid, { autoAlpha: 0 });
-    gsap.set(screenOrb, { autoAlpha: 1 });
-  }, 1.4);
+  // 3. 구슬 탄생 — 아카이브는 디졸브로 물러난다
+  tl.set(screenOrb, { autoAlpha: 1 }, 1.25);
+  tl.to(screenGrid, { autoAlpha: 0, duration: 0.45, ease: "power2.inOut" }, 1.25);
 
   tl.fromTo(marbleEl,
     { scale: 0.05, opacity: 0 },
@@ -900,53 +900,232 @@ function select() {
   tl.set(morph, { visibility: "hidden", filter: "none" });
 }
 
-function back() {
-  if (locked || current !== "orb") return;
-  locked = true;
+/* 아카이브를 원래 상태로 되돌린다 (구슬에서 오든 영상 끝에서 오든 같다) */
+function resetArchive() {
+  gsap.set([screenOrb, screenFilm, screenGarden], { autoAlpha: 0 });
+  gsap.set(screenGrid, { autoAlpha: 1 });
+  document.body.classList.remove("is-garden");
+  hideChrome(false);
   setPill("grid");
 
-  const tl = gsap.timeline({
-    onComplete: () => { locked = false; current = "grid"; },
-  });
-
-  tl.to([".orb-body", ".ghost-btn", "#orbCaption"], {
-    y: 16, opacity: 0, duration: 0.35, stagger: 0.05, ease: "power2.in",
-  });
-  tl.to("#orbHead span", {
-    y: -18, opacity: 0, duration: 0.35, stagger: 0.05, ease: "power2.in",
-  }, 0);
-  tl.to(marbleEl, { scale: 0.05, opacity: 0, duration: 0.55, ease: "back.in(1.8)" }, 0.15);
-
-  tl.add(() => {
-    gsap.set(screenOrb, { autoAlpha: 0 });
-    gsap.set(screenGrid, { autoAlpha: 1 });
-    focusNameEl.textContent = tiles[focusIndex].data.name;
-    hudIndexEl.textContent = indexLabel(tiles[focusIndex].vi);
-  }, 0.7);
-  tl.to(focusNameEl, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.75);
-
-  tl.to(".grid-fade", { opacity: 1, duration: 0.5 }, 0.7);
-  tl.to(titlebar, { opacity: 1, duration: 0.6, ease: "power2.out" }, 0.75);   // 질문 복귀
-  const cx = tiles[focusIndex].cx;
-  allTiles.forEach((el) => {
-    tl.fromTo(el,
-      { opacity: 0, y: 60, scale: 0.9, visibility: "visible" },
-      {
-        opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "power3.out",
-        delay: Math.abs(parseFloat(el.style.left) - cx) / 3200,
-      }, 0.7);
-  });
-
-  tl.add(() => {
-    allTiles.forEach((el) => gsap.set(el, { clearProps: "transform,opacity" }));
-    tiles.forEach((t) => { t.holdScale = 1; t.px = PIXEL_BASE; });
-    // 선택하며 잠가둔 팬을 다시 커서에 넘긴다
-    panLock = false;
-    panRate = PAN_RATE_FOLLOW;
-  });
-  tl.set(marbleEl, { scale: 1, opacity: 1 });
+  // 고른 타일은 선택할 때 숨겨뒀으므로 반드시 되살려야 한다
+  allTiles.forEach((el) => gsap.set(el, { clearProps: "transform,opacity", visibility: "visible" }));
+  tiles.forEach((t) => { t.holdScale = 1; t.px = PIXEL_BASE; });
+  gsap.set([".grid-fade", titlebar], { opacity: 1 });
+  gsap.set(marbleEl, { scale: 1, opacity: 1 });
+  gsap.set(focusNameEl, { opacity: 1, y: 0 });
+  focusNameEl.textContent = tiles[focusIndex].data.name;
+  hudIndexEl.textContent = indexLabel(tiles[focusIndex].vi);
+  panLock = false;
+  panRate = PAN_RATE_FOLLOW;
+  current = "grid";
 }
 
+/* 구슬 → 아카이브. 다른 전환과 똑같이 검정 페이드로 */
+async function back() {
+  if (locked || current !== "orb") return;
+  await transition(async () => resetArchive());
+}
+
+/* ============================================================
+   구슬 → 영상 → 구슬빛 정원 → 영상(뒷부분)
+
+   중간.mp4 를 26초에서 한 번 끊고, 그 사이에 정원을 끼워 넣는다.
+   장면이 바뀔 때는 스크린 도어(세로 살)가 닫혔다 열린다.
+   ============================================================ */
+const FILM_CUT = 26;                 // 앞부분이 끝나는 지점(초)
+const FADE_OUT = 0.55;               // 검정으로 덮는 시간(초)
+const FADE_IN = 0.75;                // 검정을 걷어내는 시간(초)
+
+const screenFilm = document.getElementById("screenFilm");
+const screenGarden = document.getElementById("screenGarden");
+const gardenFrame = document.getElementById("garden");
+const filmEl = document.getElementById("film");
+const filmHint = document.getElementById("filmHint");
+const fadeEl = document.getElementById("fade");
+const btnGo = document.getElementById("btnGo");
+
+gsap.set([screenFilm, screenGarden], { autoAlpha: 0 });
+
+let filmSegment = -1;                // 0 = 앞부분, 1 = 뒷부분
+let gardenLoaded = false;
+
+/* 본편 영상과 정원이 없는 저장소(인터랙션만 따로 올린 경우)에서도
+   아카이브~구슬까지는 그대로 돌아가야 한다. 없으면 알아서 빠진다. */
+let hasFilm = true;
+filmEl.addEventListener("error", () => {
+  hasFilm = false;
+  btnGo.style.display = "none";
+  console.info("[야광] film.mp4 가 없어 구슬까지만 동작합니다.");
+});
+
+/* 검정으로 덮기 / 걷어내기 */
+function fadeOut() {
+  return gsap.timeline()
+    .set(fadeEl, { visibility: "visible" })
+    .to(fadeEl, { opacity: 1, duration: FADE_OUT, ease: "power2.inOut" })
+    .to({}, { duration: 0.12 });          // 완전히 검은 상태로 한 박자
+}
+
+function fadeIn() {
+  return gsap.timeline()
+    .to(fadeEl, { opacity: 0, duration: FADE_IN, ease: "power2.inOut" })
+    .set(fadeEl, { visibility: "hidden" });
+}
+
+/* 영상이 그 지점을 그릴 준비가 될 때까지 (오래 걸리면 그냥 넘어간다) */
+function filmReady(maxWait = 5000) {
+  if (filmEl.readyState >= 3) return Promise.resolve();
+  return new Promise((res) => {
+    const done = () => { clearTimeout(t); filmEl.removeEventListener("canplay", done); res(); };
+    const t = setTimeout(done, maxWait);
+    filmEl.addEventListener("canplay", done);
+  });
+}
+
+/* 소리를 살려서 재생해보고, 막히면 음소거로 되돌린다 */
+async function playFilm() {
+  filmEl.muted = false;
+  try {
+    await filmEl.play();
+  } catch {
+    filmEl.muted = true;
+    try { await filmEl.play(); } catch {}
+  }
+}
+
+function seekFilm(t) {
+  return new Promise((res) => {
+    if (Math.abs(filmEl.currentTime - t) < 0.2) return res();
+    const done = () => { clearTimeout(to); filmEl.removeEventListener("seeked", done); res(); };
+    const to = setTimeout(done, 5000);
+    filmEl.addEventListener("seeked", done);
+    try { filmEl.currentTime = t; } catch { done(); }
+  });
+}
+
+/* 장면 교체 — 검정으로 덮인 사이에 바꿔치기한다 */
+async function transition(prepare) {
+  locked = true;
+  endHold(true);
+  await fadeOut();
+  await prepare();
+  await fadeIn();
+  locked = false;
+}
+
+function hideChrome(hidden) {
+  gsap.to([".pillnav", ".camera-box", ".hud"], {
+    autoAlpha: hidden ? 0 : 1, duration: 0.5, ease: "power2.out",
+  });
+  gsap.to(titlebar, { autoAlpha: hidden ? 0 : 1, duration: 0.5 });
+}
+
+/* 구슬 → 영상 앞부분 */
+async function toFilm(segment) {
+  if (locked) return;
+  if (!hasFilm) return back();          // 본편이 없는 저장소면 아카이브로
+  const from = current;
+  await transition(async () => {
+    gsap.set([screenGrid, screenOrb, screenGarden], { autoAlpha: 0 });
+    gsap.set(screenFilm, { autoAlpha: 1 });
+    document.body.classList.remove("is-garden");
+    hideChrome(true);
+    gsap.to(cursorEl, { opacity: 0, duration: 0.3 });
+    current = "film";
+    filmSegment = segment;
+    await filmReady();
+    await seekFilm(segment === 0 ? 0 : FILM_CUT);
+    await playFilm();
+    gsap.fromTo(filmHint, { opacity: 0 }, { opacity: 1, duration: 0.6, delay: 1.2 });
+  });
+  if (from === "orb") setPill("orb");
+}
+
+/* 영상 앞부분 → 정원 */
+async function toGarden() {
+  if (locked) return;
+  filmEl.pause();
+  await transition(async () => {
+    if (!gardenLoaded) {
+      gardenFrame.src = "gooseulbit-garden.html";
+      gardenLoaded = true;
+      await new Promise((res) => {
+        const t = setTimeout(res, 6000);
+        gardenFrame.addEventListener("load", () => { clearTimeout(t); res(); }, { once: true });
+      });
+    }
+    gsap.set(screenFilm, { autoAlpha: 0 });
+    gsap.set(screenGarden, { autoAlpha: 1 });
+    // 정원은 자체 마우스 조작이 있어서 실제 커서를 돌려준다
+    document.body.classList.add("is-garden");
+    current = "garden";
+    try { gardenFrame.contentWindow.focus(); } catch {}
+  });
+}
+
+/* 정원 → 영상 뒷부분 */
+async function toFilmTail() {
+  if (locked || current !== "garden") return;
+  await toFilm(1);
+}
+
+/* 뒷부분까지 끝나면 다시 아카이브로 — 전시가 계속 돌도록 */
+async function toArchive() {
+  if (locked) return;
+  filmEl.pause();
+  await transition(async () => resetArchive());
+}
+
+/* 26초에서 끊고 정원으로 */
+filmEl.addEventListener("timeupdate", () => {
+  if (filmSegment === 0 && filmEl.currentTime >= FILM_CUT) {
+    filmSegment = -1;
+    toGarden();
+  }
+});
+filmEl.addEventListener("ended", () => {
+  if (filmSegment === 1) { filmSegment = -1; toArchive(); }
+});
+
+/* 정원이 뜰 때마다 손봐 준다.
+   정원은 넘어가기 직전에 '다음 이야기로' 화면을 2.3초 띄우고 신호를 보내는데,
+   여기서는 검정 페이드로 넘기므로 그 화면이 겹쳐 보인다. 가리고, 기다리지도 않는다. */
+function prepareGarden() {
+  let doc;
+  try { doc = gardenFrame.contentDocument; } catch { return; }
+  if (!doc || doc.getElementById("yk-patch")) return;
+
+  const st = doc.createElement("style");
+  st.id = "yk-patch";
+  st.textContent = "#outro{display:none !important}";
+  (doc.head || doc.documentElement).appendChild(st);
+
+  // 버튼을 누르면 정원의 2.3초 지연을 기다리지 않고 바로 넘어간다
+  ["btn-next", "btn-go"].forEach((id) => {
+    const b = doc.getElementById(id);
+    if (b) b.addEventListener("click", () => toFilmTail());
+  });
+}
+gardenFrame.addEventListener("load", prepareGarden);
+
+/* 정원이 보내는 신호 — 위에서 이미 넘어갔으면 무시된다 */
+window.addEventListener("message", (e) => {
+  if (e.source !== gardenFrame.contentWindow) return;      // 정원에서 온 것만
+  if (e.data && e.data.type === "garden:next") toFilmTail();
+});
+
+/* 꾹 누르기 / Enter 는 지금 화면에서 '다음'에 해당하는 동작을 한다.
+   손으로만 조작할 때 정원의 버튼을 누를 수 없으므로 여기서도 넘어갈 수 있어야 한다. */
+function advance() {
+  if (locked) return;
+  if (current === "grid") select();
+  else if (current === "orb") (hasFilm ? toFilm(0) : back());
+  else if (current === "film") (filmSegment === 0 ? toGarden() : toArchive());
+  else if (current === "garden") toFilmTail();
+}
+
+btnGo.addEventListener("click", () => toFilm(0));
 btnBack.addEventListener("click", back);
 pillItems.forEach((b) => {
   b.addEventListener("click", () => {
@@ -961,7 +1140,7 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft") setFocus(Math.max(0, focusIndex - 1));
   if (e.key === "ArrowDown") setFocus(Math.min(tiles.length - 1, focusIndex + GRID_COLS));
   if (e.key === "ArrowUp") setFocus(Math.max(0, focusIndex - GRID_COLS));
-  if (e.key === "Enter" || e.key === " ") current === "grid" ? select() : back();
+  if (e.key === "Enter" || e.key === " ") advance();
   if (e.key === "Escape") back();
 });
 
@@ -1042,7 +1221,7 @@ function startHold() {
     onComplete: () => {
       endHold(true);
       pinchLatch = true;                  // 손을 펴기 전엔 다시 선택되지 않게
-      current === "grid" ? select() : back();
+      advance();
     },
   });
 }
@@ -1167,6 +1346,13 @@ function reveal() {
   tl.fromTo([".meta--tl", ".meta--tr", ".pillnav", ".camera-box"],
     { opacity: 0, y: 12 },
     { opacity: 1, y: 0, duration: 0.7, stagger: 0.07, ease: "power3.out" }, "-=0.7");
+
+  // 아카이브가 뜬 뒤부터 본편 영상과 정원을 뒤에서 받아둔다
+  tl.add(() => {
+    filmEl.preload = "auto";
+    filmEl.load();
+    if (!gardenLoaded) { gardenFrame.src = "gooseulbit-garden.html"; gardenLoaded = true; }
+  });
 
   tl.add(() => { focusNameEl.textContent = tiles[focusIndex].data.name; }, "-=0.5");
   tl.fromTo(focusNameEl, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5 }, "-=0.5");
